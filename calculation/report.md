@@ -238,7 +238,7 @@ $$ + \left( \frac{k_1 (1-\lambda)}{\Delta x^2} \right)                       u_{
 ![Solution at last steps 1](./src/plot(95)-90-1655658524.png)
 ![Solution at last steps 2](./src/plot(95)-90-1655656885.png)
 
-Анімації процесу можна знайти по посиланню
+Анімації процесу можна знайти по посиланню [на GitHub](https://github.com/aipyth/numerical_analysis/tree/master/calculation/src).
 
 
 # Code

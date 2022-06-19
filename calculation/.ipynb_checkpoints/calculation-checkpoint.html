@@ -1,0 +1,284 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "e5f47033-3a0f-4ad4-9498-63905b79a45d",
+   "metadata": {},
+   "source": [
+    "# Методи обчислень. Розрахунково-графічна робота.\n",
+    " \n",
+    "**Варіант 4**\n",
+    "*Змоделювати процес розповсюдження газоподібної забруднюючої \n",
+    "домішки в атмосфері за умови наявності ефекту самоочищення середовища.  \n",
+    "Самоочищення виникає при досягненні концентрацією $u$ деякого критичного \n",
+    "значення.*\n",
+    " \n",
+    "*Рівняння еволюції концентрації домішки має вигляд:*\n",
+    "\n",
+    "$$\\frac{\\partial u}{\\partial t} = k_1 \\frac{\\partial^2 u}{\\partial x^2} + k_2 \\frac{\\partial^2 u}{\\partial y^2} + \\mathcal{X} + \\varphi$$\n",
+    "\n",
+    "$$\\mathcal{X} = \\begin{cases} 0 &\\quad u < u_{cr} \\\\ -du &\\quad u \\geq u_{cr} \\end{cases}$$\n",
+    "\n",
+    "$$u(0) = 0$$\n",
+    "\n",
+    "$$u \\mid_{\\Gamma} = 0$$\n",
+    " \n",
+    "*Прийняти, що джерела забруднення розміщені в двох несусідніх \n",
+    "центральних точках області, і діють з інтенсивністю $\\varphi = 5\\text{мкг/хв}$.\n",
+    "Розміри області завдати самостійно (але розбиття області повинно включати не менше \n",
+    "10 вузлів за кожним напрямком). Знайти поле концентрації домішки на \n",
+    "протязі часу, за який  концентрація домішки встигне досягти свого \n",
+    "критичного значення хоча б в деяких точках області.*\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "b66050a3-f8da-4e6f-83c7-5d95b2a6ff36",
+   "metadata": {},
+   "source": [
+    "$$t \\in [0, \\infty]$$\n",
+    "\n",
+    "Нехай маємо границі по осі $x$: $[a_x, b_x]$, та по осі $y$: $[a_y, b_y]$. Тоді:\n",
+    "\n",
+    "$$u\\mid_{\\Gamma} = 0 \\; \\Rightarrow \\; u(a, b) = 0 \\quad \\forall a \\in \\{a_x, a_y\\}, \\forall b \\in \\{b_x, b_y\\}$$"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "3beccbd6-52c9-44b1-b568-a843033e194a",
+   "metadata": {
+    "tags": []
+   },
+   "source": [
+    "## Дискретизація\n",
+    "\n",
+    "Рівняння має параболічний тип.\n",
+    "Будемо використовувати неявну схему Кранка-Ніколсона:\n",
+    "\n",
+    "- розбиваємо відрізки $[a_x, b_x]$ та $[a_y, b_y]$ на $n+1$ вузлів\n",
+    "- $i$ позначатимемо номер вузла по $[a_x, b_x]$, а $j$ по $[a_y, b_y]$\n",
+    "- відстань між сусідніми вузлами $\\Delta x$ та $\\Delta y$\n",
+    "- дискретизуємо час $t$: $t_h \\in [0, m]$ та індекс $h \\in \\mathbb{N}_0, h = \\overline{0, l}$. крок $\\Delta t$\n",
+    "- джерело забруднення: нехай маємо дві пари $(s_1, d_1)$ та $(s_2, d_2)$, такі що\n",
+    "\n",
+    "$s_2 - s_1 > 1 \\;\\land\\; d_2 - d_1 > 1$ - умова несусідства\n",
+    "\n",
+    "тоді\n",
+    "$$\\varphi = \\begin{cases}\n",
+    "    0 &\\; (i,j) & \\not= (s_1, d_1) \\;\\land\\; (i,j) & \\not= (s_2, d_2) \\\\\n",
+    "    5 &\\; (i,j)     & = (s_1, d_1) \\;\\lor\\;  (i,j) & =     (s_2, d_2)\n",
+    "\\end{cases}$$\n",
+    "\n",
+    "\n",
+    "Беремо скінченно-різницеві апроксимації:\n",
+    "\\begin{align*}\n",
+    "\\frac{\\partial u}{\\partial t} &= \\frac{u_{i,j}^{h + 1} - u_{i,j}^{h}}{\\Delta t}\n",
+    "\\\\\n",
+    "\\frac{\\partial^2 u}{\\partial x^2} &= \n",
+    "\\lambda \\frac{u_{i+1,j}^{h+1} - 2 u_{i,j}^{h+1} + u_{i-1,j}^{h+1}}{\\Delta x^2} +\n",
+    "(1-\\lambda) \\frac{u_{i+1,j}^{h} - 2 u_{i,j}^{h} + u_{i-1,j}^{h}}{\\Delta x^2}\n",
+    "\\\\ \n",
+    "\\frac{\\partial^2 u}{\\partial y^2} &= \n",
+    "\\lambda \\frac{u_{i,j+1}^{h+1} - 2 u_{i,j}^{h+1} + u_{i,j-1}^{h+1}}{\\Delta x^2} +\n",
+    "(1-\\lambda) \\frac{u_{i,j+1}^{h} - 2 u_{i,j}^{h} + u_{i,j-1}^{h}}{\\Delta y^2}\n",
+    "\\\\\n",
+    "\\frac{\\partial u}{\\partial x} &= \\lambda \\frac{u_{i+1,j}^{h+1} - u_{i,j}^{h+1}}{\\Delta x} +\n",
+    "(1-\\lambda) \\frac{u_{i+1,j}^{h} - u_{i,j}^{h}}{\\Delta x} \\\\\n",
+    "\\frac{\\partial u}{\\partial y} &= \\lambda \\frac{u_{i,j+1}^{h+1} - u_{i,j}^{h+1}}{\\Delta y} +\n",
+    "(1-\\lambda) \\frac{u_{i,j+1}^{h} - u_{i,j}^{h}}{\\Delta y} \\\\\n",
+    "\\end{align*}\n",
+    "$$\\lambda \\in (0,1)$$"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a542fc35-2c59-41b2-b9ff-a37d7d321585",
+   "metadata": {},
+   "source": [
+    "### Різницева задача\n",
+    "\n",
+    "$$\\frac{u_{i,j}^{h + 1} - u_{i,j}^{h}}{\\Delta t} = \n",
+    "k_1 \\left( \\lambda \\frac{u_{i+1,j}^{h+1} - 2 u_{i,j}^{h+1} + u_{i-1,j}^{h+1}}{\\Delta x^2} +\n",
+    "(1-\\lambda) \\frac{u_{i+1,j}^{h} - 2 u_{i,j}^{h} + u_{i-1,j}^{h}}{\\Delta x^2} \\right) +\n",
+    "k_2 \\left( \\lambda \\frac{u_{i,j+1}^{h+1} - 2 u_{i,j}^{h+1} + u_{i,j-1}^{h+1}}{\\Delta y^2} +\n",
+    "(1-\\lambda) \\frac{u_{i,j+1}^{h} - 2 u_{i,j}^{h} + u_{i,j-1}^{h}}{\\Delta y^2} \\right) +\n",
+    "\\mathcal{X} + \\varphi$$\n",
+    "\n",
+    "$$\\mathcal{X} = \\begin{cases}\n",
+    "0 &\\quad u < u_{cr} \\\\\n",
+    "- \\left(\n",
+    "  \\lambda\\left( u_{i+1,j}^{h+1} + u_{i,j+1}^{h+1} -2 u_{i,j}^{h+1} \\right) +\n",
+    "  (1-\\lambda)\\left( u_{i+1,j}^{h} + u_{i,j+1}^{h} -2 u_{i,j}^{h} \\right) +\n",
+    "  u_{i,j}^{h+1} - u_{i,j}^{h}\n",
+    "  \\right) &\\quad u \\geq u_{cr}\n",
+    "\\end{cases}$$\n",
+    "\n",
+    "$\\exists (s_1,d_1) \\text{ and } \\exists (s_2,d_2) : \\quad s_2 - s_1 > 1 \\;\\land\\; d_2 - d_1 > 1$\n",
+    "\n",
+    "$$\\varphi = \\begin{cases}\n",
+    "    0 &\\; (i,j) &\\not= (s_1, d_1) \\; \\land \\; (i,j) &\\not= (s_2, d_2) \\\\\n",
+    "    5 &\\; (i,j)     &= (s_1, d_1) \\; \\lor  \\;  (i,j) &=     (s_2, d_2)\n",
+    "\\end{cases}$$\n",
+    "\n",
+    "З початковими:\n",
+    "$$\\forall i,j \\quad  u_{i,j}^{0} = 0$$\n",
+    "\n",
+    "З граничними:\n",
+    "$$\\forall h :\\; \\forall i : u_{i,0}^{h} = u_{i,n}^{h} = 0$$\n",
+    "$$\\forall h :\\; \\forall j : u_{0,j}^{h} = u_{n,j}^{h} = 0$$"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "22b0445f-1566-4e51-b8b7-47e278bd82a5",
+   "metadata": {},
+   "source": [
+    "Перенесемо всі значення $u$ у момент $h+1$ у ліву частину рівняння:\n",
+    "$$\\frac{1}{\\Delta t}u_{i,j}^{h+1} - k_1\\frac{\\lambda}{\\Delta x^2} \\left(\n",
+    "    u_{i+1,j}^{h+1} - 2u_{i,j}^{h+1} + u_{i-1,j}^{h+1}\n",
+    "\\right) - k_2 \\frac{\\lambda}{\\Delta y^2} \\left(\n",
+    "    u_{i,j+1}^{h+1} - 2u_{i,j}^{h+1} + u_{i,j-1}^{h+1}\n",
+    "\\right)\n",
+    "=\n",
+    "\\frac{1}{\\Delta t}u_{i,j}^{h} +\n",
+    "k_1 \\frac{(1-\\lambda)}{\\Delta x^2} \\left(\n",
+    "    u_{i+1,j}^{h} - 2u_{i,j}^{h} + u_{i-1,j}^{h}\n",
+    "\\right) +\n",
+    "k_2 \\frac{(1-\\lambda)}{\\Delta y^2} \\left(\n",
+    "    u_{i,j+1}^{h} - 2u_{i,j}^{h} + u_{i,j-1}^{h}\n",
+    "\\right) + \\mathcal{X} + \\varphi$$"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "b6e467dc-1b75-4987-beed-7e6d99befd11",
+   "metadata": {},
+   "source": [
+    "Але маємо два випадки у залежності від $u$:\n",
+    "\n",
+    "якщо $u < u_{cr}$, то \n",
+    "$$\\frac{1}{\\Delta t}u_{i,j}^{h+1} - k_1\\frac{\\lambda}{\\Delta x^2} \\left(\n",
+    "    u_{i+1,j}^{h+1} - 2u_{i,j}^{h+1} + u_{i-1,j}^{h+1}\n",
+    "\\right) - k_2 \\frac{\\lambda}{\\Delta y^2} \\left(\n",
+    "    u_{i,j+1}^{h+1} - 2u_{i,j}^{h+1} + u_{i,j-1}^{h+1}\n",
+    "\\right)\n",
+    "=\n",
+    "\\frac{1}{\\Delta t}u_{i,j}^{h} + k_1 \\frac{(1-\\lambda)}{\\Delta x^2} \\left(\n",
+    "    u_{i+1,j}^{h} - 2u_{i,j}^{h} + u_{i-1,j}^{h}\n",
+    "\\right) + k_2 \\frac{(1-\\lambda)}{\\Delta y^2} \\left(\n",
+    "    u_{i,j+1}^{h} - 2u_{i,j}^{h} + u_{i,j-1}^{h}\n",
+    "\\right)\n",
+    "+ \\varphi\n",
+    "$$"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "4fd9816b-e195-4a26-ba86-3bee4c4a9c45",
+   "metadata": {},
+   "source": [
+    "$$\\left( - \\frac{k_1\\lambda}{\\Delta x^2} \\right)u_{i+1,j}^{h+1} +\n",
+    "  \\left( - \\frac{k_2\\lambda}{\\Delta y^2} \\right)u_{i,j+1}^{h+1} +\n",
+    "  \\left( \\frac{1}{\\Delta t} + \\frac{2 k_1 \\lambda}{\\Delta x^2} +\n",
+    "         \\frac{2 k_2 \\lambda}{\\Delta y^2}\\right) u_{i,j}^{h+1} +\n",
+    "  \\left( - \\frac{k_1\\lambda}{\\Delta x^2} \\right) u_{i-1,j}^{h+1} +\n",
+    "  \\left( - \\frac{k_2\\lambda}{\\Delta y^2} \\right) u_{i,j-1}^{h+1}\n",
+    "  =\n",
+    "  \\left( \\frac{k_1(1-\\lambda)}{\\Delta x^2} \\right) u_{i+1,j}^{h} +\n",
+    "  \\left( \\frac{k_2(1-\\lambda)}{\\Delta y^2} \\right) u_{i,j+1}^{h} +\n",
+    "  \\left( \\frac{1}{\\Delta t} -\n",
+    "         \\frac{2 k_1 (1-\\lambda)}{\\Delta x^2} -\n",
+    "         \\frac{2 k_2 (1-\\lambda)}{\\Delta y^2} \\right) u_{i,j}^{h} +\n",
+    "  \\left( \\frac{k_1 (1-\\lambda)}{\\Delta x^2} \\right) u_{i-1,j}^{h} +\n",
+    "  \\left( \\frac{k_2 (1-\\lambda)}{\\Delta y^2} \\right) u_{i,j-1}^{h}\n",
+    "  + \\varphi\n",
+    "$$"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "55c2b2b4-e5cf-4b40-b7d4-46ea7de9ca9c",
+   "metadata": {},
+   "source": [
+    "а якщо $u \\geq u_{cr}$:\n",
+    "\n",
+    "$$\\frac{1}{\\Delta t}u_{i,j}^{h+1} - k_1\\frac{\\lambda}{\\Delta x^2} \\left(\n",
+    "    u_{i+1,j}^{h+1} - 2u_{i,j}^{h+1} + u_{i-1,j}^{h+1}\n",
+    "\\right) - k_2 \\frac{\\lambda}{\\Delta y^2} \\left(\n",
+    "    u_{i,j+1}^{h+1} - 2u_{i,j}^{h+1} + u_{i,j-1}^{h+1}\n",
+    "\\right)\n",
+    "=\n",
+    "\\frac{1}{\\Delta t}u_{i,j}^{h} +\n",
+    "k_1 \\frac{(1-\\lambda)}{\\Delta x^2} \\left(\n",
+    "    u_{i+1,j}^{h} - 2u_{i,j}^{h} + u_{i-1,j}^{h}\n",
+    "\\right) +\n",
+    "k_2 \\frac{(1-\\lambda)}{\\Delta y^2} \\left(\n",
+    "    u_{i,j+1}^{h} - 2u_{i,j}^{h} + u_{i,j-1}^{h}\n",
+    "\\right)\n",
+    "- \\left(\n",
+    "  \\lambda\\left( u_{i+1,j}^{h+1} + u_{i,j+1}^{h+1} -2 u_{i,j}^{h+1} \\right) +\n",
+    "  (1-\\lambda)\\left( u_{i+1,j}^{h} + u_{i,j+1}^{h} -2 u_{i,j}^{h} \\right) +\n",
+    "  u_{i,j}^{h+1} - u_{i,j}^{h}\n",
+    "  \\right) $$"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "c35637a0-b1ba-47ad-a46b-01cd09095a6b",
+   "metadata": {},
+   "source": [
+    "$$\\left( - \\frac{k_1\\lambda}{\\Delta x^2} + \\lambda \\right)            u_{i+1,j}^{h+1} +\n",
+    "  \\left( - \\frac{k_2\\lambda}{\\Delta y^2} + \\lambda \\right)            u_{i,j+1}^{h+1} +\n",
+    "  \\left( \\frac{1}{\\Delta t} + \\frac{2 k_1 \\lambda}{\\Delta x^2} +\n",
+    "         \\frac{2 k_2 \\lambda}{\\Delta y^2} - 2 \\lambda + 1 \\right)     u_{i,j}^{h+1} +\n",
+    "  \\left( - \\frac{k_1\\lambda}{\\Delta x^2} \\right)                      u_{i-1,j}^{h+1} +\n",
+    "  \\left( - \\frac{k_2\\lambda}{\\Delta y^2} \\right)                      u_{i,j-1}^{h+1}\n",
+    "  =\n",
+    "  \\left( \\frac{k_1(1-\\lambda)}{\\Delta x^2} - 1 + \\lambda \\right)      u_{i+1,j}^{h} +\n",
+    "  \\left( \\frac{k_2(1-\\lambda)}{\\Delta y^2} - 1 + \\lambda \\right)      u_{i,j+1}^{h} +\n",
+    "  \\left( \\frac{1}{\\Delta t} -\n",
+    "         \\frac{2 k_1 (1-\\lambda)}{\\Delta x^2} -\n",
+    "         \\frac{2 k_2 (1-\\lambda)}{\\Delta y^2} + 2 - 2 \\lambda + 1 \\right) u_{i,j}^{h} +\n",
+    "  \\left( \\frac{k_1 (1-\\lambda)}{\\Delta x^2} \\right)                       u_{i-1,j}^{h} +\n",
+    "  \\left( \\frac{k_2 (1-\\lambda)}{\\Delta y^2} \\right)                       u_{i,j-1}^{h}\n",
+    "  + \\varphi\n",
+    "$$"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "6c3a7f12-9a28-4be1-9fcd-d60525ae9c69",
+   "metadata": {},
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "id": "451adc33-288e-49b8-a083-535da3c006ef",
+   "metadata": {},
+   "source": [
+    "$$$$"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.5"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
